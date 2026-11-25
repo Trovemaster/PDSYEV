@@ -1,9 +1,6 @@
-PLAT   = _pdsyev_darwin
-FOR    = mpif90
-CC = icc
-
-FFLAGS = -O3 -ipo -xHost -traceback -g
-#-align -mcmodel=medium -traceback
+PLAT   = _pdsyev_intel
+FOR    = mpiifort
+FFLAGS = -O3 -ipo -no-prec-div -fp-model fast=2 -xHost
 
 SCALAPACK = -lmkl_scalapack_lp64 -lmkl_blacs_sgimpt_lp64 -mkl=sequential -lmpi
 
@@ -14,16 +11,15 @@ LIB = -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lmkl_intel_lp64 -lmkl_sequ
 
 #LIB = -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_blacs_openmpi_lp64 -lmkl_sequential -lmkl_core -lpthread
 
-OBJ = accuracy.o timer.o input.o pdlaprnt_local.o  
-#utils.o
+OBJ = accuracy.o timer.o input.o pdlaprnt_local.o
 
 default:   diag$(PLAT).x
 
-diag$(PLAT).x:  $(OBJ) diag_pdsyev.o
-	$(FOR) $(FFLAGS) -o diag$(PLAT).x $(OBJ) diag_pdsyev.o $(LIB)
+diag$(PLAT).x:  $(OBJ) diag_pdsyev_write_vec_parallel_v3.o
+	$(FOR) $(FFLAGS) -o diag$(PLAT).x $(OBJ) diag_pdsyev_write_vec_parallel_v3.o $(LIB)
 
-diag_pdsyev.o:  diag_pdsyev.f90 $(OBJ) 
-	$(FOR) -c diag_pdsyev.f90 $(FFLAGS)
+diag_pdsyev_write_vec_parallel_v3.o:  diag_pdsyev_write_vec_parallel_v3.f90 $(OBJ) 
+	$(FOR) -c diag_pdsyev_write_vec_parallel_v3.f90 $(FFLAGS)
 
 pdlaprnt_local.o: pdlaprnt_local.f
 	$(FOR) -c pdlaprnt_local.f $(FFLAGS)
@@ -36,10 +32,6 @@ timer.o:  timer.f90 accuracy.o
 
 input.o:  input.f90 accuracy.o
 	$(FOR) -c input.f90 $(FFLAGS)
-
-#.c.o:
-#	$(CC) -openmp -c -O2 -g -DUSE_COMPLEX $*.c
-
 
 clean:
 	rm $(OBJ) *.mod diag_pdsyev.o *.x

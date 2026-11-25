@@ -29,7 +29,7 @@ module timer
   integer, parameter :: name_len   =   40 ! Max length of timer name
   !
   real(rk)           :: maxmemory   =   0 ! Maximal memory allocated 
-  real(rk)           :: memory_limit =   61 ! Gb
+  real(rk)           :: memory_limit =   3.95 ! Gb
   !
   type tim
     logical                 :: used       ! Slot used?
@@ -698,16 +698,19 @@ module timer
     !
     !  Produce timing report
     !
-    subroutine MemoryReport(comm,iam,memory_now,memory_max)
+    subroutine MemoryReport(comm,iam,memory_now,memory_max,verbose_)
       integer(ik), intent(in)      :: comm,iam   ! communicator
+      integer(ik),intent(in),optional :: verbose_
       real(trk)             :: mem
       real(trk),intent(out) :: memory_now,memory_max
       real(trk)          :: mem_threshold
       integer(ik)        :: ord
-      integer(ik)        :: pos, kid_pos
+      integer(ik)        :: pos, kid_pos,verbose=4
       type(tarray_unit), pointer :: t, k
       character(len=1)   :: active
       integer(ik)        :: omitted
+      !
+      if (present(verbose_).and.iam/=0) verbose = verbose_
       !
       memory_now  = array_size
       !
@@ -717,8 +720,8 @@ module timer
       !
       mem_threshold = 0.01_trk * memory_now
       !
-      write (out,"(//t2,'Memory Report (',i4,')')") iam
-      write (out,"(t2,'Active Arrays',t55,'size (Gb)')")
+      if (verbose>=4) write (out,"(//t2,'Memory Report (',i4,')')") iam
+      if (verbose>=4) write (out,"(t2,'Active Arrays',t55,'size (Gb)')")
       !write (out,"()")
       !
       omitted = 0
@@ -750,18 +753,16 @@ module timer
         !
         !  Output
         !
-        write (out,"(t2,a,t50,t55,e11.4)") &
+        if (verbose>=4) write (out,"(t2,a,t50,t55,e11.4)") &
                t%name, t%size
       end do scan
-      write (out,"(t2,'Total memory   = ',t47,f18.8,' Gb')") memory_now
-      write (out,"(t2,'Maximal memory = ',t47,f18.8,' Gb (',f16.1,')')") maxmemory,memory_limit
-
-
+      if (verbose>=4) write (out,"(t2,'Total memory   = ',t47,f18.8,' Gb')") memory_now
+      if (verbose>=4) write (out,"(t2,'Maximal memory = ',t47,f18.8,' Gb (',f16.1,')')") maxmemory,memory_limit
+      !
       if (omitted>0) then
-        write (out,"(/' (',i9,' arrays contributing less than 1% are not shown)')") &
-               omitted
+        if (verbose>=4) write (out,"(/' (',i9,' arrays contributing less than 1% are not shown)')") omitted
       end if
-      write (out,"()")
+      if (verbose>=4) write (out,"()")
     end subroutine MemoryReport
 
 
